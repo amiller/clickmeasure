@@ -1,8 +1,8 @@
 import cv
 import freenect
-from matplotlib.cm import get_cmap
 import numpy as np
 import pylab
+import sys
 
 depth = None
 rgb = None
@@ -24,23 +24,6 @@ def xyz_matrix():
 xyz_matrix = xyz_matrix().astype('f')
 
 
-def build_depthlut():
-    """Builds a pretty lookup table that maps range(2048) depth data to
-    RGB range(256) data for display. I ended up not using this because
-    it's too slow to be worthwhile using indexing, i.e. lut[depth] took 60ms
-    """
-    from scipy.interpolate import interp1d
-    cm = get_cmap()
-    x = np.linspace(0,2048,256)
-    y = np.array([cm(i) for i in range(256)])[:,:3]
-    interps = [interp1d(x,y[:,i]) for i in range(3)]
-    lut = np.vstack([[interp(_) for _ in range(2048)] for interp in interps])
-    lut = lut.astype('f').transpose()
-    return lut
-if not 'lut' in globals():
-    lut = build_depthlut()
-
-
 def show_depth(depth=depth):
     """Although opencv supports numpy directly,
     i.e. cv.ShowImage('depth',depth), it leaks memory. This is a workaround
@@ -50,13 +33,32 @@ def show_depth(depth=depth):
     cv.ShowImage('depth',im)
 
 
+def estimate_measurement():
+    """Get the average depth in the area around the clicks
+    """
+    def pt(x,y):
+        d = depth[y-10:y+10,x-10:x+10]
+        meand = d[d<2047].max()
+        return x,y,meand,1
+    pt1 = pt(*clickpts[0])
+    pt2 = pt(*clickpts[1])
+    pt1 = np.dot(xyz_matrix, pt1); pt1 = pt1[:3]/pt1[3]
+    pt2 = np.dot(xyz_matrix, pt2); pt2 = pt2[:3]/pt2[3]
+    diff = pt1-pt2
+    print "Distance from camera (m): ", -pt1[2]
+    print "Distance between points (m): ", np.sqrt(np.dot(diff,diff))
+
+
 def on_click(event, x, y, flags, param):
     if not event == cv.CV_EVENT_LBUTTONDOWN: return
     global clickpts
     if len(clickpts) < 2:
         clickpts.append((x,y))
     if len(clickpts) == 2:
-        print "ok"
+        estimate_measurement()
+        clickpts = []
+    sys.stdout.flush()
+cv.NamedWindow('depth',0)
 cv.SetMouseCallback('depth', on_click)
 
 
@@ -72,12 +74,10 @@ def advance():
     global depth, rgb
     (depth,_),(rgb,_) = freenect.sync_get_depth(), freenect.sync_get_video()
     show_depth(depth)
-    #cv.WaitKey(10)
-    pylab.waitforbuttonpress(0.01)
-    import time
-    time.sleep(0.01)
+    #pylab.waitforbuttonpress(0.01)
+    cv.WaitKey(10)
 
 
 if __name__ == '__main__':
     pass
-    #go()  # Uncomment this if you want to run it without ipython
+    go()
