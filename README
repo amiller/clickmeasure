@@ -3,7 +3,12 @@ Proof-of-concept tool to take measurements with the kinect.
 Run the script with
   python clickmeasure.py
 
-Hopefully you'll see a live preview of the depth image. Click on two points - a measurement will be printed on the console. The measurement is made by sampling the depth image in the [-10,10] neighborhood of each point, and taking the mean. The depth sample and x,y location are projected using a default intrinsic calibration matrix to produce points in (metric) world space.
+
+Hopefully you'll see a live preview of the depth image. Click on two points - a measurement will be displayed. The measurement is made by sampling the depth image in the [-10,10] neighborhood of each point, and taking the mean. The depth sample and x,y location are projected using a default intrinsic calibration matrix to produce points in (metric) world space.
+
+The boxes indicate the width of the 'sample area' around each selected point. 
 
 
 I like to uncomment the 'go()' at the bottom (and also replace cv.WaitKey() with pylab.waitforbutonpress()) and run the script with ipython -pylab. Doing it this way, you can interrupt the loop with ^C, poke around at the global variables, depth, rgb, etc., then start it again by typing go(). 
+
+

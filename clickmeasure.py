@@ -7,7 +7,7 @@ import sys
 depth = None
 rgb = None
 clickpts = []
-
+sample_side = 10
 
 def xyz_matrix():
     fx = 583.0
@@ -24,20 +24,42 @@ def xyz_matrix():
 xyz_matrix = xyz_matrix().astype('f')
 
 
-def show_depth(depth=depth):
+def show_depth(depth=depth,name='depth'):
     """Although opencv supports numpy directly,
     i.e. cv.ShowImage('depth',depth), it leaks memory. This is a workaround
     """
-    im = cv.CreateImage((640,480),32,1)
-    cv.SetData(im, (depth.astype('f')%256 / 256.).tostring())
-    cv.ShowImage('depth',im)
+    im = cv.CreateImage((640,480),32,3)
+    cv.SetData(im, np.dstack(3*[(depth.astype('f')%256 / 256.)]).tostring())
+
+    if len(clickpts)==1:
+        pt1 = np.array(clickpts[0],'i4')
+        cv.Rectangle(im, tuple(pt1-sample_side/2),
+                     tuple(pt1+sample_side/2), (255,255,0))
+
+    if len(clickpts)==2:
+        pt1 = np.array(clickpts[0],'i4')
+        pt2 = np.array(clickpts[1],'i4')
+        cv.Rectangle(im, tuple(pt1-sample_side/2),
+                     tuple(pt1+sample_side/2), (255,0,255))
+        cv.Rectangle(im, tuple(pt2-sample_side/2),
+                     tuple(pt2+sample_side/2), (255,0,255))
+        cv.Line(im, tuple(pt1),tuple(pt2), (255,0,255))
+
+        dist = estimate_measurement()
+        cv.PutText(im, '%.3f meters' % dist,
+                   tuple(np.minimum(pt1,pt2)-(10,10)),
+                   cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 0.6, 0.6),
+                   (255,0,255))
+
+    cv.ShowImage(name,im)
 
 
 def estimate_measurement():
     """Get the average depth in the area around the clicks
     """
     def pt(x,y):
-        d = depth[y-10:y+10,x-10:x+10]
+        t = sample_side
+        d = depth[y-t:y+t,x-t:x+t]
         meand = d[d<2047].max()
         return x,y,meand,1
     pt1 = pt(*clickpts[0])
@@ -45,20 +67,24 @@ def estimate_measurement():
     pt1 = np.dot(xyz_matrix, pt1); pt1 = pt1[:3]/pt1[3]
     pt2 = np.dot(xyz_matrix, pt2); pt2 = pt2[:3]/pt2[3]
     diff = pt1-pt2
-    print "Distance from camera (m): ", -pt1[2]
-    print "Distance between points (m): ", np.sqrt(np.dot(diff,diff))
+    return np.sqrt(np.dot(diff,diff))
+    #print "Distance from camera (m): ", -pt1[2]
+    #print "Distance between points (m): ", np.sqrt(np.dot(diff,diff))
 
 
 def on_click(event, x, y, flags, param):
     if not event == cv.CV_EVENT_LBUTTONDOWN: return
     global clickpts
-    if len(clickpts) < 2:
-        clickpts.append((x,y))
     if len(clickpts) == 2:
-        estimate_measurement()
         clickpts = []
+    clickpts.append((x,y))
+    if len(clickpts) == 2:
+        # Draw the snapshot
+        show_depth(depth, 'snapshot')
+
     sys.stdout.flush()
 cv.NamedWindow('depth',0)
+cv.NamedWindow('snapshot',0)
 cv.SetMouseCallback('depth', on_click)
 
 
@@ -74,7 +100,7 @@ def advance():
     global depth, rgb
     (depth,_),(rgb,_) = freenect.sync_get_depth(), freenect.sync_get_video()
     show_depth(depth)
-    #pylab.waitforbuttonpress(0.01)
+    #pylab.waitforbuttonpress(0.005)
     cv.WaitKey(10)
 
 
