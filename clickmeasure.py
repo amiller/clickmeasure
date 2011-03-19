@@ -9,6 +9,7 @@ rgb = None
 clickpts = []
 sample_side = 10
 
+
 def xyz_matrix():
     fx = 583.0
     fy = 583.0
@@ -29,7 +30,7 @@ def show_depth(depth=depth,name='depth'):
     i.e. cv.ShowImage('depth',depth), it leaks memory. This is a workaround
     """
     im = cv.CreateImage((640,480),32,3)
-    cv.SetData(im, np.dstack(3*[(depth.astype('f')%256 / 256.)]).tostring())
+    cv.SetData(im, np.dstack(3*[(depth.astype('f')/8. / 256.)]).tostring())
 
     if len(clickpts)==1:
         pt1 = np.array(clickpts[0],'i4')
@@ -62,8 +63,11 @@ def estimate_measurement():
         d = depth[y-t:y+t,x-t:x+t]
         meand = d[d<2047].max()
         return x,y,meand,1
-    pt1 = pt(*clickpts[0])
-    pt2 = pt(*clickpts[1])
+    try:
+        pt1 = pt(*clickpts[0])
+        pt2 = pt(*clickpts[1])
+    except:
+        return np.inf
     pt1 = np.dot(xyz_matrix, pt1); pt1 = pt1[:3]/pt1[3]
     pt2 = np.dot(xyz_matrix, pt2); pt2 = pt2[:3]/pt2[3]
     diff = pt1-pt2
