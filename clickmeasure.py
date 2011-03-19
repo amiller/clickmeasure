@@ -3,6 +3,8 @@ import freenect
 import numpy as np
 import pylab
 import sys
+import colormap
+
 
 depth = None
 rgb = None
@@ -30,8 +32,8 @@ def show_depth(depth=depth,name='depth'):
     """Although opencv supports numpy directly,
     i.e. cv.ShowImage('depth',depth), it leaks memory. This is a workaround
     """
-    im = cv.CreateImage((640,480),32,3)
-    cv.SetData(im, np.dstack(3*[(depth.astype('f')/8. / 256.)]).tostring())
+    im = cv.CreateImage((640,480),8,3)
+    cv.SetData(im, colormap.color_map(depth).tostring())
 
     if len(clickpts)==1:
         pt1 = np.array(clickpts[0],'i4')
@@ -50,8 +52,8 @@ def show_depth(depth=depth,name='depth'):
         dist = estimate_measurement()
         cv.PutText(im, '%.3f meters' % dist,
                    tuple(np.minimum(pt1,pt2)-(10,10)),
-                   cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 0.6, 0.6),
-                   (255,0,255))
+                   cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 0.7, 0.7),
+                   (255,255,255))
 
     cv.ShowImage(name,im)
 
