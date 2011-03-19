@@ -8,6 +8,7 @@ depth = None
 rgb = None
 clickpts = []
 sample_side = 10
+frozen = None
 
 
 def xyz_matrix():
@@ -102,10 +103,15 @@ def advance():
     """Grab a frame, show the image, wait for a bit to pump events
     """
     global depth, rgb
-    (depth,_),(rgb,_) = freenect.sync_get_depth(), freenect.sync_get_video()
+    global frozen
+    if not frozen:
+        (depth,_) = freenect.sync_get_depth()
+        (rgb,_) = freenect.sync_get_video()
     show_depth(depth)
     #pylab.waitforbuttonpress(0.005)
-    cv.WaitKey(10)
+    c = cv.WaitKey(10)
+    if c == ord('f'):
+        frozen = not frozen
 
 
 if __name__ == '__main__':
