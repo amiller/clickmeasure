@@ -3,7 +3,6 @@ import freenect
 import numpy as np
 import pylab
 import sys
-import colormap
 
 
 depth = None
@@ -33,7 +32,8 @@ def show_depth(depth=depth,name='depth'):
     i.e. cv.ShowImage('depth',depth), it leaks memory. This is a workaround
     """
     im = cv.CreateImage((640,480),8,3)
-    cv.SetData(im, colormap.color_map(depth).tostring())
+    cv.SetData(im, np.ascontiguousarray(np.dstack(\
+        3*[(depth % 256).astype('u1')])).tostring())
 
     if len(clickpts)==1:
         pt1 = np.array(clickpts[0],'i4')
