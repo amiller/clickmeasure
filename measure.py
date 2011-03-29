@@ -43,6 +43,10 @@ def estimate_distance(depth, pt1, pt2):
         """
         t = sample_side
         d = depth[y-t:y+t,x-t:x+t]
+
+        # This is where I choose which point in the sample to use. I take
+        # the minimum, which is the nearest pixel. Other possibilities
+        # are median, mean, etc.
         meand = d[d<2047].min()
         return x,y,meand,1
 
