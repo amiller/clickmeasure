@@ -1,5 +1,18 @@
 Proof-of-concept tool to take measurements with the kinect. 
 
+
+
+Batch Experiment Version
+------------------------
+You need to get a dataset from Tom's dropbox. It should be in the current directory as 'data/'.
+
+Run the script with
+  python measure_dataset.py
+
+
+
+Interactive Version
+-------------------
 Run the script with
   python clickmeasure.py
 
