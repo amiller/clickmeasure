@@ -2,7 +2,6 @@ import numpy as np
 import glob
 import os
 import measure
-import cv
 
 
 def run_one_file(filename):
@@ -23,13 +22,6 @@ def run_one_file(filename):
 
     print('[%03.0fmm]/[%03dmm] (est/actual) %s' %
           (dist*1000,real,filename))
-
-    if 0:
-        import pylab
-        pylab.imshow(depth)
-
-    cv.SaveImage(os.path.join(dirname, '%d_depth.bin.png' % i),
-                 (depth/8).astype('i1'))
 
 
 def run_all_files():
