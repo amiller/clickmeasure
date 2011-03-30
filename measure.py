@@ -19,10 +19,10 @@ def _xyz_matrix():
 xyz_matrix = _xyz_matrix().astype('f')
 
 # This is a parameter for the width of the sampling window
-sample_side = 10
+sample_side = 20
 
 
-def estimate_distance(depth, pt1, pt2):
+def estimate_distance(depth, pt1, pt2, method='median'):
     """
     Args:
       depth: a kinect depth image, 16 bit numpy array
@@ -47,7 +47,12 @@ def estimate_distance(depth, pt1, pt2):
         # This is where I choose which point in the sample to use. I take
         # the minimum, which is the nearest pixel. Other possibilities
         # are median, mean, etc.
-        meand = d[d<2047].min()
+        if method=='median':
+            meand = np.median(d[d<2047])
+        if method=='mean':
+            meand = np.mean(d[d<2047])
+        if method=='min':
+            meand = d[d<2047].min()
         return x,y,meand,1
 
     # Sample neighborhood
