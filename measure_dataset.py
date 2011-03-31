@@ -4,7 +4,7 @@ import os
 import measure
 
 
-def run_one_file(filename,method='median'):
+def run_one_file(filename,method='min'):
     dirname, fname = os.path.split(filename)
 
     # Chop off the file extension, split the name into important parts
@@ -31,8 +31,8 @@ def run_all_files():
     for filename in filenames:
         dist,real = run_one_file(filename)
 
-        print('[%03.0fmm]/[%03dmm] (est/actual) %s' %
-          (dist*1000,real,filename))
+        print('[%03.0fmm]/[%03.0fmm] (est/actual) %s' %
+          (dist*1000,real*1000,filename))
 
 
 def results():
@@ -49,16 +49,17 @@ def results():
         dists, reals = np.array(r).transpose()
         err = (dists-reals)/reals
         pylab.subplot(len(methods),1,i+1)
-        pylab.hist(err.clip(-.2,0.3),bins=30, alpha=0.6, label=method)
+        pylab.hist(err.clip(-.2,0.3),bins=30, alpha=0.6,
+                   label=method, normed=True)
         pylab.xlim([-.2,0.3])
         pylab.legend()
 
     pylab.subplot(len(methods),1,1)
     pylab.title('Error distributions of clickmeasure methods')
     pylab.subplot(len(methods),1,3)
-    pylab.xlabel('percent error (est-real)/(real)')
+    pylab.xlabel('relative error (est-real)/(real)')
     pylab.subplot(len(methods),1,2)
-    pylab.ylabel('frequency')
+    pylab.ylabel('frequency (%)')
 
 if __name__ == '__main__':
     run_all_files()
