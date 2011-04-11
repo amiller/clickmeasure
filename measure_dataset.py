@@ -4,7 +4,7 @@ import os
 import measure
 
 
-def run_one_file(filename,method='min'):
+def run_one_file(filename,method='kmeans'):
     dirname, fname = os.path.split(filename)
 
     # Chop off the file extension, split the name into important parts
@@ -43,7 +43,7 @@ def results():
     pylab.figure(1)
     pylab.clf()
 
-    methods = ['mean','median','min']
+    methods = ['mean','median','min','kmeans']
     for i, method in zip(range(len(methods)),methods):
         r = [run_one_file(filename, method) for filename in filenames]
         dists, reals = np.array(r).transpose()

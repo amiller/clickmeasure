@@ -18,8 +18,8 @@ def _xyz_matrix():
 # Just build this matrix once and keep it in the module
 xyz_matrix = _xyz_matrix().astype('f')
 
-# This is a parameter for the width of the sampling window
-sample_side = 20
+# This is a parameter for (half) the width of the sampling window
+sample_side = 4
 
 
 def estimate_distance(depth, pt1, pt2, method='median'):
@@ -42,6 +42,7 @@ def estimate_distance(depth, pt1, pt2, method='median'):
         any invalid (depth == 2047) pixels
         """
         t = sample_side
+        global d, ds, samples, mask
         d = depth[y-t:y+t,x-t:x+t]
 
         # This is where I choose which point in the sample to use. I take
@@ -53,12 +54,31 @@ def estimate_distance(depth, pt1, pt2, method='median'):
             meand = np.mean(d[d<2047])
         if method=='min':
             meand = d[d<2047].min()
+        if method=='kmeans':
+            import Pycluster
+            labels, error, nfound = Pycluster.kcluster(d.reshape(-1,1),4)
+            labels = labels.reshape(d.shape)
+            means = np.array([d[labels==i].mean() for i in range(labels.max()+1)])
+            nearest = np.argmin(means)
+            mask = labels==nearest
+            samples = d[mask]
+
+            def radius(target):
+                x,y = np.nonzero(d == target)
+                return np.sqrt((x[0]-sample_side/2)**2+(y[0]-sample_side/2)**2)
+            cands = (samples.min(), samples.max())
+            rads = [radius(i) for i in cands]
+
+            meand = means.min()
+            #meand = cands[np.argmax(rads)]
+            #meand = np.median(samples)
+            #meand = samples.min() if np.median(samples) > np.mean(samples) else samples.max()
         return x,y,meand,1
 
     # Sample neighborhood
     try:
         pt1,pt2 = pt(*pt1), pt(*pt2)
-    except ValueError:
+    except KeyboardInterrupt:  # ValueError:
         return np.inf
 
     # Convert to metric coordinates
